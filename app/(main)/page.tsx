@@ -3,7 +3,6 @@
 
 import Fieldset from "@/components/fieldset";
 import ArrowRightIcon from "@/components/icons/arrow-right";
-import LightningBoltIcon from "@/components/icons/lightning-bolt";
 import LoadingButton from "@/components/loading-button";
 import Spinner from "@/components/spinner";
 import * as Select from "@radix-ui/react-select";
@@ -19,6 +18,7 @@ import { useS3Upload } from "next-s3-upload";
 import UploadIcon from "@/components/icons/upload-icon";
 import { XCircleIcon } from "@heroicons/react/20/solid";
 import { MODELS, SUGGESTED_PROMPTS } from "@/lib/constants";
+import { parseDataFile, generateDataPrompt } from "@/lib/data-parser";
 
 export default function Home() {
   const { setStreamPromise } = use(Context);
@@ -26,25 +26,47 @@ export default function Home() {
 
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState(MODELS[0].value);
-  const [quality, setQuality] = useState("high");
+  const quality = "high"; // Always use high quality
   const [screenshotUrl, setScreenshotUrl] = useState<string | undefined>(
     undefined,
   );
   const [screenshotLoading, setScreenshotLoading] = useState(false);
+  const [dataFile, setDataFile] = useState<File | undefined>(undefined);
+  const [dataLoading, setDataLoading] = useState(false);
   const selectedModel = MODELS.find((m) => m.value === model);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dataFileInputRef = useRef<HTMLInputElement>(null);
 
   const [isPending, startTransition] = useTransition();
 
   const { uploadToS3 } = useS3Upload();
   const handleScreenshotUpload = async (event: any) => {
     if (prompt.length === 0) setPrompt("Build this");
-    setQuality("low");
     setScreenshotLoading(true);
     let file = event.target.files[0];
     const { url } = await uploadToS3(file);
     setScreenshotUrl(url);
     setScreenshotLoading(false);
+  };
+
+  const handleDataFileUpload = async (event: any) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    setDataLoading(true);
+    try {
+      const parsedData = await parseDataFile(file);
+      setDataFile(file);
+      
+      // Auto-generate prompt based on data
+      const dataPrompt = generateDataPrompt(parsedData, prompt || "Create a comprehensive dashboard");
+      setPrompt(dataPrompt);
+    } catch (error) {
+      console.error('Error parsing data file:', error);
+      alert(`Error parsing file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setDataLoading(false);
+    }
   };
 
   const textareaResizePrompt = prompt
@@ -89,11 +111,27 @@ export default function Home() {
                 assert.ok(typeof model === "string");
                 assert.ok(quality === "high" || quality === "low");
 
+                // Prepare data context if data file was uploaded
+                let dataContext;
+                if (dataFile) {
+                  try {
+                    const parsedData = await parseDataFile(dataFile);
+                    dataContext = {
+                      dataColumns: parsedData.headers,
+                      dataTypes: parsedData.dataTypes,
+                      userPrompt: prompt,
+                    };
+                  } catch (error) {
+                    console.error('Error parsing data for context:', error);
+                  }
+                }
+
                 const { chatId, lastMessageId } = await createChat(
                   prompt,
                   model,
                   quality,
                   screenshotUrl,
+                  dataContext,
                 );
 
                 const streamPromise = fetch(
@@ -149,6 +187,43 @@ export default function Home() {
                           if (fileInputRef.current) {
                             fileInputRef.current.value = "";
                           }
+                        }}
+                      >
+                        <XCircleIcon />
+                      </button>
+                    </div>
+                  )}
+                  {dataLoading && (
+                    <div className="relative mx-3 mt-3">
+                      <div className="rounded-xl">
+                        <div className="group mb-2 flex h-16 w-[68px] animate-pulse items-center justify-center rounded bg-muted">
+                          <Spinner />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {dataFile && (
+                    <div
+                      className={`${isPending ? "invisible" : ""} relative mx-3 mt-3`}
+                    >
+                      <div className="rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 border border-border/30">
+                        <div className="group relative mb-2 h-16 w-[68px] rounded flex items-center justify-center">
+                          <div className="text-2xl">📊</div>
+                          <div className="absolute bottom-0 left-0 right-0 text-[10px] text-center text-muted-foreground bg-background/80 rounded-b">
+                            {dataFile.name.split('.').pop()?.toUpperCase()}
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="absolute -right-3 -top-4 left-14 z-10 size-5 rounded-full bg-card text-foreground hover:text-muted-foreground"
+                        onClick={() => {
+                          setDataFile(undefined);
+                          if (dataFileInputRef.current) {
+                            dataFileInputRef.current.value = "";
+                          }
+                          // Reset prompt if it was auto-generated
+                          setPrompt("");
                         }}
                       >
                         <XCircleIcon />
@@ -221,57 +296,11 @@ export default function Home() {
                     </Select.Root>
 
                     <div className="h-4 w-px bg-border max-sm:hidden" />
-
-                    <Select.Root
-                      name="quality"
-                      value={quality}
-                      onValueChange={setQuality}
-                    >
-
-                      <Select.Trigger className="inline-flex items-center gap-1 rounded p-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">
-                        <Select.Value aria-label={quality}>
-                          <span>
-                            {quality === "low"
-                              ? "Low quality [faster]"
-                              : "High quality [slower]"}
-                          </span>
-                          <span className="sm:hidden">
-                            <LightningBoltIcon className="size-3" />
-                          </span>
-                        </Select.Value>
-                        <Select.Icon>
-                          <ChevronDownIcon className="size-3" />
-                        </Select.Icon>
-                      </Select.Trigger>
-                      <Select.Portal>
-                        <Select.Content className="overflow-hidden rounded-md bg-popover shadow-lg ring-1 ring-border">
-                          <Select.Viewport className="space-y-1 p-2">
-                            {[
-                              { value: "low", label: "Low quality [faster]" },
-                              {
-                                value: "high",
-                                label: "High quality [slower]",
-                              },
-                            ].map((q) => (
-                              <Select.Item
-                                key={q.value}
-                                value={q.value}
-                                className="flex cursor-pointer items-center gap-1 rounded-md p-1 text-sm data-[highlighted]:bg-accent data-[highlighted]:outline-none"
-                              >
-                                <Select.ItemText className="inline-flex items-center gap-2 text-popover-foreground">
-                                  {q.label}
-                                </Select.ItemText>
-                                <Select.ItemIndicator>
-                                  <CheckIcon className="size-3 text-blue-400" />
-                                </Select.ItemIndicator>
-                              </Select.Item>
-                            ))}
-                          </Select.Viewport>
-                          <Select.ScrollDownButton />
-                          <Select.Arrow />
-                        </Select.Content>
-                      </Select.Portal>
-                    </Select.Root>
+                    
+                    <div className="text-xs text-muted-foreground flex items-center gap-1">
+                      <div className="size-2 rounded-full bg-green-500"></div>
+                      High Quality
+                    </div>
                     <div className="h-4 w-px bg-border max-sm:hidden" />
                     <div>
                       <label
@@ -293,6 +322,29 @@ export default function Home() {
                         onChange={handleScreenshotUpload}
                         className="hidden"
                         ref={fileInputRef}
+                      />
+                    </div>
+                    
+                    <div className="h-4 w-px bg-border max-sm:hidden" />
+                    <div>
+                      <label
+                        htmlFor="datafile"
+                        className="flex cursor-pointer gap-2 text-sm text-muted-foreground hover:underline"
+                      >
+                        <div className="flex size-6 items-center justify-center rounded bg-muted hover:bg-accent">
+                          📊
+                        </div>
+                        <div className="flex items-center justify-center transition hover:text-foreground">
+                          Data
+                        </div>
+                      </label>
+                      <input
+                        id="datafile"
+                        type="file"
+                        accept=".csv,.json,.xlsx,.xls"
+                        onChange={handleDataFileUpload}
+                        className="hidden"
+                        ref={dataFileInputRef}
                       />
                     </div>
                   </div>

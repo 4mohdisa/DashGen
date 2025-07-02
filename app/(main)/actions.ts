@@ -8,12 +8,14 @@ import {
 } from "@/lib/prompts";
 import { notFound } from "next/navigation";
 import Together from "together-ai";
+import { getRelevantPatterns, generateMemoryEnhancedPrompt, type MemoryContext } from "@/lib/memory";
 
 export async function createChat(
   prompt: string,
   model: string,
   quality: "high" | "low",
   screenshotUrl: string | undefined,
+  dataContext?: MemoryContext,
 ) {
   const prisma = getPrisma();
   const chat = await prisma.chat.create({
@@ -115,6 +117,23 @@ export async function createChat(
   }
 
   let userMessage: string;
+  
+  // Enhance prompt with memory patterns if data context is provided
+  let enhancedPrompt = prompt;
+  if (dataContext) {
+    try {
+      const relevantPatterns = await getRelevantPatterns(dataContext);
+      enhancedPrompt = generateMemoryEnhancedPrompt(prompt, relevantPatterns);
+    } catch (error) {
+      console.error('Error enhancing prompt with memory:', error);
+      // Continue with original prompt if memory fails
+    }
+  }
+  
+  const finalPrompt = fullScreenshotDescription
+    ? fullScreenshotDescription + enhancedPrompt
+    : enhancedPrompt;
+  
   if (quality === "high") {
     let initialRes = await together.chat.completions.create({
       model: "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
@@ -125,23 +144,21 @@ export async function createChat(
         },
         {
           role: "user",
-          content: fullScreenshotDescription
-            ? fullScreenshotDescription + prompt
-            : prompt,
+          content: finalPrompt,
         },
       ],
       temperature: 0.2,
       max_tokens: 2000,
     });
 
-    userMessage = initialRes.choices[0].message?.content ?? prompt;
+    userMessage = initialRes.choices[0].message?.content ?? enhancedPrompt;
   } else if (fullScreenshotDescription) {
     userMessage =
-      prompt +
+      enhancedPrompt +
       "RECREATE THIS APP AS CLOSELY AS POSSIBLE: " +
       fullScreenshotDescription;
   } else {
-    userMessage = prompt;
+    userMessage = enhancedPrompt;
   }
 
   let newChat = await prisma.chat.update({

@@ -26,7 +26,7 @@ export default function ChatLog({
       resize="smooth"
       initial="smooth"
     >
-      <StickToBottom.Content className="mx-auto flex w-full max-w-prose flex-col gap-8 p-8">
+      <StickToBottom.Content className="mx-auto flex w-full max-w-prose flex-col gap-4 p-6">
         <UserMessage content={chat.prompt} />
 
         {chat.messages.slice(2).map((message) => (
@@ -94,7 +94,7 @@ function AssistantMessage({
         {parts.map((part, index) => (
           <div key={index}>
             {part.type === "text" && (
-              <Markdown className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-code:text-foreground prose-pre:bg-muted prose-pre:text-foreground">
+              <Markdown className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-code:text-foreground prose-pre:bg-muted prose-pre:text-foreground prose-p:my-2 prose-headings:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1">
                 {part.content}
               </Markdown>
             )}

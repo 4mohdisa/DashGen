@@ -41,3 +41,15 @@ model Message {
 
   @@index([chatId])
 }
+
+model DashboardMemory {
+  id                 String   @id @default(nanoid(16))
+  dataSchema         String   // JSON string of column names and types
+  userIntent         String   // The original user prompt
+  successfulElements String   // JSON array of successful components
+  commonMistakes     String   // JSON array of common mistakes
+  bestPractices      String   // JSON array of best practices
+  createdAt          DateTime @default(now())
+
+  @@index([createdAt])
+}
