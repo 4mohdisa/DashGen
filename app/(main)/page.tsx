@@ -36,8 +36,16 @@ export default function Home() {
   const selectedModel = MODELS.find((m) => m.value === model);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dataFileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [isPending, startTransition] = useTransition();
+
+  const adjustTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 128) + 'px';
+    }
+  };
 
   const { uploadToS3 } = useS3Upload();
   const handleScreenshotUpload = async (event: any) => {
@@ -61,6 +69,9 @@ export default function Home() {
       // Auto-generate prompt based on data
       const dataPrompt = generateDataPrompt(parsedData, prompt || "Create a comprehensive dashboard");
       setPrompt(dataPrompt);
+      
+      // Adjust textarea height after setting prompt
+      setTimeout(adjustTextareaHeight, 0);
     } catch (error) {
       console.error('Error parsing data file:', error);
       alert(`Error parsing file: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -69,10 +80,6 @@ export default function Home() {
     }
   };
 
-  const textareaResizePrompt = prompt
-    .split("\n")
-    .map((text) => (text === "" ? "a" : text))
-    .join("\n");
 
   return (
     <div className="relative flex grow flex-col min-h-screen">
@@ -105,11 +112,10 @@ export default function Home() {
             className="relative w-full max-w-2xl pt-6 lg:pt-12"
             action={async (formData) => {
               startTransition(async () => {
-                const { prompt, model, quality } = Object.fromEntries(formData);
+                const { prompt, model } = Object.fromEntries(formData);
 
                 assert.ok(typeof prompt === "string");
                 assert.ok(typeof model === "string");
-                assert.ok(quality === "high" || quality === "low");
 
                 // Prepare data context if data file was uploaded
                 let dataContext;
@@ -231,19 +237,17 @@ export default function Home() {
                     </div>
                   )}
                   <div className="relative">
-                    <div className="p-3">
-                      <p className="invisible w-full whitespace-pre-wrap">
-                        {textareaResizePrompt}
-                      </p>
-                    </div>
                     <textarea
+                      ref={textareaRef}
                       placeholder="✨ Build me a beautiful sales dashboard with charts and metrics..."
                       required
                       name="prompt"
-                      rows={1}
-                      className={`peer absolute inset-0 w-full resize-none bg-transparent p-3 placeholder-muted-foreground/70 text-foreground focus-visible:outline-none disabled:opacity-50 text-base transition-opacity duration-200 ${isPending ? 'opacity-0' : 'opacity-100'}`}
+                      className={`w-full resize-none bg-transparent p-3 placeholder-muted-foreground/70 text-foreground focus-visible:outline-none disabled:opacity-50 text-base transition-opacity duration-200 min-h-[44px] max-h-32 overflow-y-auto ${isPending ? 'opacity-0' : 'opacity-100'}`}
                       value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
+                      onChange={(e) => {
+                        setPrompt(e.target.value);
+                        adjustTextareaHeight();
+                      }}
                       onKeyDown={(event) => {
                         if (event.key === "Enter" && !event.shiftKey) {
                           event.preventDefault();
@@ -253,6 +257,11 @@ export default function Home() {
                         }
                       }}
                       disabled={isPending}
+                      style={{
+                        height: 'auto',
+                        minHeight: '44px',
+                        maxHeight: '8rem'
+                      }}
                     />
                   </div>
                 </div>
