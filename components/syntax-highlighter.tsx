@@ -2,6 +2,7 @@
 
 import { use } from "react";
 import { createHighlighter } from "shiki/bundle/web";
+import { useTheme } from "next-themes";
 
 const highlighterPromise = createHighlighter({
   langs: [
@@ -28,7 +29,7 @@ const highlighterPromise = createHighlighter({
     "typescript",
     "zsh",
   ],
-  themes: ["github-light-default"],
+  themes: ["github-light-default", "github-dark-default"],
 });
 
 export default function SyntaxHighlighter({
@@ -38,13 +39,17 @@ export default function SyntaxHighlighter({
   code: string;
   language: string;
 }) {
+  const { theme } = useTheme();
   const highlighter = use(highlighterPromise);
+  
+  const selectedTheme = theme === "light" ? "github-light-default" : "github-dark-default";
+  
   const html = highlighter.codeToHtml(code, {
     lang: language,
-    theme: "github-light-default",
+    theme: selectedTheme,
   });
 
   return (
-    <div className="p-4 text-sm" dangerouslySetInnerHTML={{ __html: html }} />
+    <div className="p-4 text-sm bg-background text-foreground" dangerouslySetInnerHTML={{ __html: html }} />
   );
 }

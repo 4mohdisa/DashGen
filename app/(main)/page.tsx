@@ -6,11 +6,9 @@ import ArrowRightIcon from "@/components/icons/arrow-right";
 import LightningBoltIcon from "@/components/icons/lightning-bolt";
 import LoadingButton from "@/components/loading-button";
 import Spinner from "@/components/spinner";
-import bgImg from "@/public/halo.png";
 import * as Select from "@radix-ui/react-select";
 import assert from "assert";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useState, useRef, useTransition } from "react";
@@ -55,37 +53,31 @@ export default function Home() {
     .join("\n");
 
   return (
-    <div className="relative flex grow flex-col">
-      <div className="absolute inset-0 flex justify-center">
-        <Image
-          src={bgImg}
-          alt=""
-          className="max-h-[953px] w-full max-w-[1200px] object-cover object-top mix-blend-screen"
-          priority
-        />
-      </div>
-
+    <div className="relative flex grow flex-col min-h-screen">
       <div className="isolate flex h-full grow flex-col">
         <Header />
 
-        <div className="mt-10 flex grow flex-col items-center px-4 lg:mt-16">
-          <a
-            className="mb-4 inline-flex shrink-0 items-center rounded-full border-[0.5px] bg-white px-7 py-2 text-xs text-gray-800 shadow-[0px_1px_1px_0px_rgba(0,0,0,0.25)] md:text-base"
-            href="https://togetherai.link/?utm_source=llamacoder&utm_medium=referral&utm_campaign=example-app"
-            target="_blank"
-          >
-            <span className="text-center">
-              Powered by <span className="font-semibold">Together AI</span>.
-              Used by
-              <span className="font-semibold"> 1.1M+ users. </span>
-            </span>
-          </a>
+        <div className="mt-10 flex grow flex-col items-center px-4 lg:mt-16 flex-1">
 
-          <h1 className="mt-4 text-balance text-center text-4xl leading-none text-gray-700 md:text-[64px] lg:mt-8">
-            Turn your <span className="text-blue-500">idea</span>
-            <br className="hidden md:block" /> into an{" "}
-            <span className="text-blue-500">app</span>
-          </h1>
+          <div className="relative">
+            <h1 className="mt-4 text-balance text-center text-4xl leading-none text-foreground md:text-[64px] lg:mt-8">
+              Create stunning{" "}
+              <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent font-bold">
+                dashboards
+              </span>
+              <br className="hidden md:block" /> 
+              with{" "}
+              <span className="bg-gradient-to-r from-emerald-500 to-blue-500 bg-clip-text text-transparent font-bold">
+                AI magic
+              </span>
+            </h1>
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-32 h-32 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-3xl -z-10" />
+          </div>
+          
+          <p className="mt-6 text-center text-lg text-muted-foreground max-w-2xl mx-auto">
+            Transform your ideas into beautiful, interactive dashboards in seconds. 
+            Just describe what you need, and watch our AI build it for you.
+          </p>
 
           <form
             className="relative w-full max-w-2xl pt-6 lg:pt-12"
@@ -125,12 +117,13 @@ export default function Home() {
             }}
           >
             <Fieldset>
-              <div className="relative flex w-full max-w-2xl rounded-xl border-4 border-gray-300 bg-white pb-10">
-                <div className="w-full">
+              <div className="relative flex w-full max-w-2xl rounded-2xl border-2 border-border/50 bg-card/90 backdrop-blur-md shadow-2xl shadow-black/5 dark:shadow-black/20 pb-10 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5 dark:from-blue-500/10 dark:via-purple-500/10 dark:to-pink-500/10" />
+                <div className="w-full relative z-10">
                   {screenshotLoading && (
                     <div className="relative mx-3 mt-3">
                       <div className="rounded-xl">
-                        <div className="group mb-2 flex h-16 w-[68px] animate-pulse items-center justify-center rounded bg-gray-200">
+                        <div className="group mb-2 flex h-16 w-[68px] animate-pulse items-center justify-center rounded bg-muted">
                           <Spinner />
                         </div>
                       </div>
@@ -150,7 +143,7 @@ export default function Home() {
                       <button
                         type="button"
                         id="x-circle-icon"
-                        className="absolute -right-3 -top-4 left-14 z-10 size-5 rounded-full bg-white text-gray-900 hover:text-gray-500"
+                        className="absolute -right-3 -top-4 left-14 z-10 size-5 rounded-full bg-card text-foreground hover:text-muted-foreground"
                         onClick={() => {
                           setScreenshotUrl(undefined);
                           if (fileInputRef.current) {
@@ -169,11 +162,11 @@ export default function Home() {
                       </p>
                     </div>
                     <textarea
-                      placeholder="Build me a budgeting app..."
+                      placeholder="✨ Build me a beautiful sales dashboard with charts and metrics..."
                       required
                       name="prompt"
                       rows={1}
-                      className="peer absolute inset-0 w-full resize-none bg-transparent p-3 placeholder-gray-500 focus-visible:outline-none disabled:opacity-50"
+                      className="peer absolute inset-0 w-full resize-none bg-transparent p-3 placeholder-muted-foreground/70 text-foreground focus-visible:outline-none disabled:opacity-50 text-base"
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
                       onKeyDown={(event) => {
@@ -194,7 +187,7 @@ export default function Home() {
                       value={model}
                       onValueChange={setModel}
                     >
-                      <Select.Trigger className="inline-flex items-center gap-1 rounded-md p-1 text-sm text-gray-400 hover:bg-gray-100 hover:text-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300">
+                      <Select.Trigger className="inline-flex items-center gap-1 rounded-md p-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">
                         <Select.Value aria-label={model}>
                           <span>{selectedModel?.label}</span>
                         </Select.Value>
@@ -203,19 +196,19 @@ export default function Home() {
                         </Select.Icon>
                       </Select.Trigger>
                       <Select.Portal>
-                        <Select.Content className="overflow-hidden rounded-md bg-white shadow ring-1 ring-black/5">
+                        <Select.Content className="overflow-hidden rounded-md bg-popover shadow-lg ring-1 ring-border">
                           <Select.Viewport className="space-y-1 p-2">
                             {MODELS.map((m) => (
                               <Select.Item
                                 key={m.value}
                                 value={m.value}
-                                className="flex cursor-pointer items-center gap-1 rounded-md p-1 text-sm data-[highlighted]:bg-gray-100 data-[highlighted]:outline-none"
+                                className="flex cursor-pointer items-center gap-1 rounded-md p-1 text-sm data-[highlighted]:bg-accent data-[highlighted]:outline-none"
                               >
-                                <Select.ItemText className="inline-flex items-center gap-2 text-gray-500">
+                                <Select.ItemText className="inline-flex items-center gap-2 text-popover-foreground">
                                   {m.label}
                                 </Select.ItemText>
                                 <Select.ItemIndicator>
-                                  <CheckIcon className="size-3 text-blue-600" />
+                                  <CheckIcon className="size-3 text-blue-400" />
                                 </Select.ItemIndicator>
                               </Select.Item>
                             ))}
@@ -226,16 +219,17 @@ export default function Home() {
                       </Select.Portal>
                     </Select.Root>
 
-                    <div className="h-4 w-px bg-gray-200 max-sm:hidden" />
+                    <div className="h-4 w-px bg-border max-sm:hidden" />
 
                     <Select.Root
                       name="quality"
                       value={quality}
                       onValueChange={setQuality}
                     >
-                      <Select.Trigger className="inline-flex items-center gap-1 rounded p-1 text-sm text-gray-400 hover:bg-gray-100 hover:text-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300">
+
+                      <Select.Trigger className="inline-flex items-center gap-1 rounded p-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">
                         <Select.Value aria-label={quality}>
-                          <span className="max-sm:hidden">
+                          <span>
                             {quality === "low"
                               ? "Low quality [faster]"
                               : "High quality [slower]"}
@@ -249,7 +243,7 @@ export default function Home() {
                         </Select.Icon>
                       </Select.Trigger>
                       <Select.Portal>
-                        <Select.Content className="overflow-hidden rounded-md bg-white shadow ring-1 ring-black/5">
+                        <Select.Content className="overflow-hidden rounded-md bg-popover shadow-lg ring-1 ring-border">
                           <Select.Viewport className="space-y-1 p-2">
                             {[
                               { value: "low", label: "Low quality [faster]" },
@@ -261,13 +255,13 @@ export default function Home() {
                               <Select.Item
                                 key={q.value}
                                 value={q.value}
-                                className="flex cursor-pointer items-center gap-1 rounded-md p-1 text-sm data-[highlighted]:bg-gray-100 data-[highlighted]:outline-none"
+                                className="flex cursor-pointer items-center gap-1 rounded-md p-1 text-sm data-[highlighted]:bg-accent data-[highlighted]:outline-none"
                               >
-                                <Select.ItemText className="inline-flex items-center gap-2 text-gray-500">
+                                <Select.ItemText className="inline-flex items-center gap-2 text-popover-foreground">
                                   {q.label}
                                 </Select.ItemText>
                                 <Select.ItemIndicator>
-                                  <CheckIcon className="size-3 text-blue-600" />
+                                  <CheckIcon className="size-3 text-blue-400" />
                                 </Select.ItemIndicator>
                               </Select.Item>
                             ))}
@@ -277,16 +271,16 @@ export default function Home() {
                         </Select.Content>
                       </Select.Portal>
                     </Select.Root>
-                    <div className="h-4 w-px bg-gray-200 max-sm:hidden" />
+                    <div className="h-4 w-px bg-border max-sm:hidden" />
                     <div>
                       <label
                         htmlFor="screenshot"
-                        className="flex cursor-pointer gap-2 text-sm text-gray-400 hover:underline"
+                        className="flex cursor-pointer gap-2 text-sm text-muted-foreground hover:underline"
                       >
-                        <div className="flex size-6 items-center justify-center rounded bg-black hover:bg-gray-700">
+                        <div className="flex size-6 items-center justify-center rounded bg-muted hover:bg-accent">
                           <UploadIcon className="size-4" />
                         </div>
-                        <div className="flex items-center justify-center transition hover:text-gray-700">
+                        <div className="flex items-center justify-center transition hover:text-foreground">
                           Attach
                         </div>
                       </label>
@@ -303,13 +297,13 @@ export default function Home() {
                   </div>
 
                   <div className="relative flex shrink-0 has-[:disabled]:opacity-50">
-                    <div className="pointer-events-none absolute inset-0 -bottom-[1px] rounded bg-blue-500" />
+                    <div className="pointer-events-none absolute inset-0 -bottom-[1px] rounded-lg bg-gradient-to-r from-blue-600 to-purple-600" />
 
                     <LoadingButton
-                      className="relative inline-flex size-6 items-center justify-center rounded bg-blue-500 font-medium text-white shadow-lg outline-blue-300 hover:bg-blue-500/75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                      className="relative inline-flex size-8 items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 font-medium text-white shadow-lg outline-blue-400 hover:from-blue-700 hover:to-purple-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 transition-all duration-200 hover:shadow-xl hover:scale-105"
                       type="submit"
                     >
-                      <ArrowRightIcon />
+                      <ArrowRightIcon className="w-4 h-4" />
                     </LoadingButton>
                   </div>
                 </div>
@@ -321,15 +315,16 @@ export default function Home() {
                   />
                 )}
               </div>
-              <div className="mt-4 flex w-full flex-wrap justify-center gap-3">
+              <div className="mt-6 flex w-full flex-wrap justify-center gap-3">
                 {SUGGESTED_PROMPTS.map((v) => (
                   <button
                     key={v.title}
                     type="button"
                     onClick={() => setPrompt(v.description)}
-                    className="rounded bg-gray-200 px-2.5 py-1.5 text-xs hover:bg-gray-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-300"
+                    className="group relative rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/50 dark:to-purple-950/50 px-4 py-2.5 text-sm font-medium text-foreground border border-border/50 hover:border-blue-300 dark:hover:border-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring transition-all duration-200 hover:shadow-md hover:scale-105"
                   >
-                    {v.title}
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/0 to-purple-500/0 group-hover:from-blue-500/5 group-hover:to-purple-500/5 transition-all duration-200" />
+                    <span className="relative z-10">{v.title}</span>
                   </button>
                 ))}
               </div>
@@ -337,49 +332,40 @@ export default function Home() {
           </form>
         </div>
 
-        <footer className="flex w-full flex-col items-center justify-between space-y-3 px-5 pb-3 pt-5 text-center sm:flex-row sm:pt-2">
+        {/* Fixed Footer */}
+        <footer className="mt-auto flex w-full flex-col items-center justify-between space-y-3 px-5 pb-6 pt-5 text-center sm:flex-row sm:pt-2 border-t border-border/50 bg-background/80 backdrop-blur-sm">
           <div>
-            <div className="font-medium">
-              Built with{" "}
-              <a
-                href="https://togetherai.link/?utm_source=llamacoder&utm_medium=referral&utm_campaign=example-app"
-                className="font-semibold text-blue-600 underline-offset-4 transition hover:text-gray-700 hover:underline"
-              >
-                Llama
-              </a>{" "}
-              and{" "}
-              <a
-                href="https://togetherai.link/?utm_source=llamacoder&utm_medium=referral&utm_campaign=example-app"
-                className="font-semibold text-blue-600 underline-offset-4 transition hover:text-gray-700 hover:underline"
-              >
-                Together AI
-              </a>
-              .
+            <div className="font-medium text-muted-foreground">
+              Powered by{" "}
+              <span className="font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                DashGen AI
+              </span>
+              {" "}– Create amazing dashboards instantly
             </div>
           </div>
           <div className="flex space-x-4 pb-4 sm:pb-0">
             <Link
-              href="https://twitter.com/nutlope"
-              className="group"
-              aria-label=""
+              href="https://twitter.com/4mohdisa"
+              className="group p-2 rounded-lg hover:bg-accent transition-colors"
+              aria-label="Twitter"
             >
               <svg
                 aria-hidden="true"
-                className="h-6 w-6 fill-gray-500 group-hover:fill-gray-700"
+                className="h-5 w-5 fill-muted-foreground group-hover:fill-blue-500 transition-colors"
               >
                 <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0 0 22 5.92a8.19 8.19 0 0 1-2.357.646 4.118 4.118 0 0 0 1.804-2.27 8.224 8.224 0 0 1-2.605.996 4.107 4.107 0 0 0-6.993 3.743 11.65 11.65 0 0 1-8.457-4.287 4.106 4.106 0 0 0 1.27 5.477A4.073 4.073 0 0 1 2.8 9.713v.052a4.105 4.105 0 0 0 3.292 4.022 4.093 4.093 0 0 1-1.853.07 4.108 4.108 0 0 0 3.834 2.85A8.233 8.233 0 0 1 2 18.407a11.615 11.615 0 0 0 6.29 1.84" />
               </svg>
             </Link>
             <Link
-              href="https://github.com/Nutlope/llamacoder"
-              className="group"
-              aria-label=""
+              href="https://github.com/4mohdisa"
+              className="group p-2 rounded-lg hover:bg-accent transition-colors"
+              aria-label="GitHub"
             >
               <svg
                 aria-hidden="true"
-                className="h-6 w-6 fill-slate-500 group-hover:fill-slate-700"
+                className="h-5 w-5 fill-muted-foreground group-hover:fill-foreground transition-colors"
               >
-                <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2Z" />
+                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
               </svg>
             </Link>
           </div>
@@ -397,14 +383,14 @@ function LoadingMessage({
   screenshotUrl: string | undefined;
 }) {
   return (
-    <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-white px-1 py-3 md:px-3">
-      <div className="flex flex-col items-center justify-center gap-2 text-gray-500">
+    <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-card/90 backdrop-blur-sm px-1 py-3 md:px-3">
+      <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
         <span className="animate-pulse text-balance text-center text-sm md:text-base">
           {isHighQuality
             ? `Coming up with project plan, may take 15 seconds...`
             : screenshotUrl
               ? "Analyzing your screenshot..."
-              : `Creating your app...`}
+              : `Creating your dashboard...`}
         </span>
 
         <Spinner />

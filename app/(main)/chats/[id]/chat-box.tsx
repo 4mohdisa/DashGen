@@ -2,11 +2,9 @@
 
 import ArrowRightIcon from "@/components/icons/arrow-right";
 import Spinner from "@/components/spinner";
-import assert from "assert";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { createMessage } from "../../actions";
-import { type Chat } from "./page";
+import type { Chat } from "./page";
 
 export default function ChatBox({
   chat,
@@ -17,42 +15,30 @@ export default function ChatBox({
   onNewStreamPromise: (v: Promise<ReadableStream>) => void;
   isStreaming: boolean;
 }) {
-  const [isPending, startTransition] = useTransition();
-  const router = useRouter();
-  const disabled = isPending || isStreaming;
-  const didFocusOnce = useRef(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [prompt, setPrompt] = useState("");
-  const textareaResizePrompt = prompt
+  const [message, setMessage] = useState("");
+  const [disabled, startTransition] = useTransition();
+
+  const textareaResizeMessage = message
     .split("\n")
     .map((text) => (text === "" ? "a" : text))
     .join("\n");
 
-  useEffect(() => {
-    if (!textareaRef.current) return;
-
-    if (!disabled && !didFocusOnce.current) {
-      textareaRef.current.focus();
-      didFocusOnce.current = true;
-    } else {
-      didFocusOnce.current = false;
-    }
-  }, [disabled]);
-
   return (
-    <div className="mx-auto mb-5 flex w-full max-w-prose shrink-0 px-8">
+    <div className="w-full px-4 pb-4">
       <form
-        className="relative flex w-full"
-        action={async () => {
+        action={async (formData) => {
           startTransition(async () => {
-            const message = await createMessage(chat.id, prompt, "user");
+            const messageContent = String(formData.get("message"));
+
+            const newMessage = await createMessage(chat.id, messageContent, "user");
+
             const streamPromise = fetch(
               "/api/get-next-completion-stream-promise",
               {
                 method: "POST",
                 body: JSON.stringify({
-                  messageId: message.id,
-                  model: chat.model,
+                  messageId: newMessage.id,
+                  model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
                 }),
               },
             ).then((res) => {
@@ -63,47 +49,44 @@ export default function ChatBox({
             });
 
             onNewStreamPromise(streamPromise);
-            startTransition(() => {
-              router.refresh();
-              setPrompt("");
-            });
+            setMessage("");
           });
         }}
       >
-        <fieldset className="w-full" disabled={disabled}>
-          <div className="relative flex rounded-lg border-4 border-gray-300 bg-white">
-            <div className="relative w-full">
-              <div className="w-full p-2">
-                <p className="invisible min-h-[48px] w-full whitespace-pre-wrap">
-                  {textareaResizePrompt}
-                </p>
+        <fieldset disabled={disabled || isStreaming}>
+          <div className="relative flex w-full rounded-lg border-2 border-border bg-card/90 backdrop-blur-sm pb-8">
+            <div className="w-full">
+              <div className="relative">
+                <div className="p-3">
+                  <p className="invisible w-full whitespace-pre-wrap text-foreground">
+                    {textareaResizeMessage}
+                  </p>
+                </div>
+                <textarea
+                  placeholder="Follow up question..."
+                  required
+                  name="message"
+                  rows={1}
+                  className="peer absolute inset-0 w-full resize-none bg-transparent p-3 placeholder-muted-foreground text-foreground focus-visible:outline-none disabled:opacity-50"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      event.preventDefault();
+                      const target = event.target;
+                      if (!(target instanceof HTMLTextAreaElement)) return;
+                      target.closest("form")?.requestSubmit();
+                    }
+                  }}
+                />
               </div>
-              <textarea
-                ref={textareaRef}
-                placeholder="Follow up"
-                autoFocus={!disabled}
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                required
-                name="prompt"
-                className="peer absolute inset-0 w-full resize-none bg-transparent p-2 placeholder-gray-500 focus:outline-none disabled:opacity-50"
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && !event.shiftKey) {
-                    event.preventDefault();
-                    const target = event.target;
-                    if (!(target instanceof HTMLTextAreaElement)) return;
-                    target.closest("form")?.requestSubmit();
-                  }
-                }}
-              />
             </div>
-            <div className="pointer-events-none absolute inset-0 rounded peer-focus:outline peer-focus:outline-offset-0 peer-focus:outline-blue-500" />
 
             <div className="absolute bottom-1.5 right-1.5 flex has-[:disabled]:opacity-50">
-              <div className="pointer-events-none absolute inset-0 -bottom-[1px] rounded bg-blue-700" />
+              <div className="pointer-events-none absolute inset-0 -bottom-[1px] rounded bg-primary" />
 
               <button
-                className="relative inline-flex size-6 items-center justify-center rounded bg-blue-500 font-medium text-white shadow-lg outline-blue-300 hover:bg-blue-500/75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                className="relative inline-flex size-6 items-center justify-center rounded bg-primary font-medium text-primary-foreground shadow-lg outline-ring hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 transition-colors"
                 type="submit"
               >
                 <Spinner loading={disabled}>

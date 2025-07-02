@@ -24,38 +24,33 @@ export const MODELS = [
 
 export const SUGGESTED_PROMPTS = [
   {
-    title: "Quiz app",
+    title: "Sales Dashboard",
     description:
-      "Make me a quiz app about American history. Make sure to give the user an explanation on each question whether they got it right or wrong and keep a score going",
+      "Create a comprehensive sales dashboard with revenue charts, top performing products, sales trends over time, and key performance indicators. Include interactive charts and filters for different time periods.",
   },
   {
-    title: "SaaS Landing page",
+    title: "Analytics Dashboard",
     description:
-      "A landing page for a SaaS business that includes a clear value proposition in a prominent hero section, concise feature overviews, testimonials, pricing, and a clear call-to-action button leading to a free trial or demo.",
+      "Build an analytics dashboard that shows website traffic, user engagement metrics, conversion rates, and visitor demographics. Include various chart types like line graphs, pie charts, and progress bars.",
   },
   {
-    title: "Pomodoro Timer",
+    title: "Project Management Dashboard",
     description:
-      "Make a beautiful pomodoro timer where I can adjust the lengths of the focus time and the break and it will beep when done.",
+      "Design a project management dashboard with task progress, team performance, upcoming deadlines, and project status overview. Include progress bars, status indicators, and activity feeds.",
   },
   {
-    title: "Blog app",
+    title: "Financial Dashboard",
     description:
-      "Make me a blog app that has a few blogs there for people to read. Users can click into the blogs and read them, then go back to the homepage to see more.",
-  },
-  // {
-  //   title: "Recipe site",
-  //   description:
-  //     "Make me a site that has easy to make recipes in a grid that you can click into and see the full recipe. Also make it possible for me to add my own",
-  // },
-  {
-    title: "Flashcard app",
-    description:
-      "Build me a flashcard app about llamas. Have some flash cards and also have the ability for users to add their own. Show one side of a card at first and reveal the answer on button click, keeping track of correct guesses to measure progress.",
+      "Create a financial dashboard displaying monthly expenses, income trends, budget tracking, and investment portfolio performance. Include interactive charts and summary cards with key financial metrics.",
   },
   {
-    title: "Timezone dashboard",
+    title: "E-commerce Dashboard",
     description:
-      "Make me a time zone dashboard that shows me the time zone in the top 6 most popular time zones and gives me a dropdown to add others",
+      "Build an e-commerce dashboard showing product sales, customer analytics, order status, inventory levels, and revenue metrics. Include charts for sales trends and top-selling products.",
+  },
+  {
+    title: "HR Dashboard",
+    description:
+      "Design an HR dashboard with employee metrics, attendance tracking, performance indicators, and departmental statistics. Include charts for headcount, employee satisfaction, and recruitment metrics.",
   },
 ];

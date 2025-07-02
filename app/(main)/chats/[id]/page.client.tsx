@@ -2,7 +2,6 @@
 
 import { createMessage } from "@/app/(main)/actions";
 import LogoSmall from "@/components/icons/logo-small";
-import { splitByFirstCodeFence } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { startTransition, use, useEffect, useRef, useState } from "react";
@@ -31,73 +30,58 @@ export default function PageClient({ chat }: { chat: Chat }) {
   );
 
   useEffect(() => {
-    async function f() {
-      if (!streamPromise || isHandlingStreamRef.current) return;
+    if (!streamPromise || isHandlingStreamRef.current) return;
 
-      isHandlingStreamRef.current = true;
-      context.setStreamPromise(undefined);
+    isHandlingStreamRef.current = true;
+    setStreamText("");
+    setIsShowingCodeViewer(true);
 
-      const stream = await streamPromise;
-      let didPushToCode = false;
-      let didPushToPreview = false;
+    (async () => {
+      try {
+        const reader = (await streamPromise).getReader();
+        const stream = ChatCompletionStream.fromReadableStream(
+          new ReadableStream({
+            start(controller) {
+              function push() {
+                reader.read().then(({ done, value }) => {
+                  if (done) {
+                    controller.close();
+                    return;
+                  }
+                  controller.enqueue(value);
+                  push();
+                });
+              }
+              push();
+            },
+          }),
+        );
 
-      ChatCompletionStream.fromReadableStream(stream)
-        .on("content", (delta, content) => {
-          setStreamText((text) => text + delta);
-
-          if (
-            !didPushToCode &&
-            splitByFirstCodeFence(content).some(
-              (part) => part.type === "first-code-fence-generating",
-            )
-          ) {
-            didPushToCode = true;
-            setIsShowingCodeViewer(true);
-            setActiveTab("code");
+        for await (const chunk of stream) {
+          if (chunk.choices[0]?.delta?.content) {
+            setStreamText((prev) => prev + chunk.choices[0].delta.content);
           }
+        }
 
-          if (
-            !didPushToPreview &&
-            splitByFirstCodeFence(content).some(
-              (part) => part.type === "first-code-fence",
-            )
-          ) {
-            didPushToPreview = true;
-            setIsShowingCodeViewer(true);
-            setActiveTab("preview");
-          }
-        })
-        .on("finalContent", async (finalText) => {
-          startTransition(async () => {
-            const message = await createMessage(
-              chat.id,
-              finalText,
-              "assistant",
-            );
-
-            startTransition(() => {
-              isHandlingStreamRef.current = false;
-              setStreamText("");
-              setStreamPromise(undefined);
-              setActiveMessage(message);
-              router.refresh();
-            });
-          });
-        });
-    }
-
-    f();
-  }, [chat.id, router, streamPromise, context]);
+        router.refresh();
+      } catch (error) {
+        console.error("Error reading stream:", error);
+      } finally {
+        isHandlingStreamRef.current = false;
+        setStreamPromise(undefined);
+      }
+    })();
+  }, [streamPromise, router]);
 
   return (
-    <div className="h-dvh">
+    <div className="h-dvh bg-background">
       <div className="flex h-full">
-        <div className="mx-auto flex w-full shrink-0 flex-col overflow-hidden lg:w-1/2">
-          <div className="flex items-center gap-4 px-4 py-4">
+        <div className="mx-auto flex w-full shrink-0 flex-col overflow-hidden bg-background lg:w-1/2">
+          <div className="flex items-center gap-4 px-4 py-4 border-b border-border bg-card">
             <Link href="/">
               <LogoSmall />
             </Link>
-            <p className="italic text-gray-500">{chat.title}</p>
+            <p className="italic text-muted-foreground">{chat.title}</p>
           </div>
 
           <ChatLog
@@ -124,54 +108,41 @@ export default function PageClient({ chat }: { chat: Chat }) {
 
         <CodeViewerLayout
           isShowing={isShowingCodeViewer}
-          onClose={() => {
-            setActiveMessage(undefined);
-            setIsShowingCodeViewer(false);
-          }}
+          onClose={() => setIsShowingCodeViewer(false)}
         >
-          {isShowingCodeViewer && (
-            <CodeViewer
-              streamText={streamText}
-              chat={chat}
-              message={activeMessage}
-              onMessageChange={setActiveMessage}
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-              onClose={() => {
-                setActiveMessage(undefined);
-                setIsShowingCodeViewer(false);
-              }}
-              onRequestFix={(error: string) => {
-                startTransition(async () => {
-                  let newMessageText = `The code is not working. Can you fix it? Here's the error:\n\n`;
-                  newMessageText += error.trimStart();
-                  const message = await createMessage(
-                    chat.id,
-                    newMessageText,
-                    "user",
-                  );
-
-                  const streamPromise = fetch(
-                    "/api/get-next-completion-stream-promise",
-                    {
-                      method: "POST",
-                      body: JSON.stringify({
-                        messageId: message.id,
-                        model: chat.model,
-                      }),
-                    },
-                  ).then((res) => {
+          <CodeViewer
+            chat={chat}
+            streamText={streamText}
+            message={activeMessage}
+            onMessageChange={setActiveMessage}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            onClose={() => setIsShowingCodeViewer(false)}
+            onRequestFix={(error) => {
+              startTransition(() => {
+                const streamPromise = createMessage(
+                  chat.id,
+                  `I'm getting this error:\n\`\`\`\n${error}\n\`\`\`\n\nCan you please fix it?`,
+                  "user",
+                ).then((message) =>
+                  fetch("/api/get-next-completion-stream-promise", {
+                    method: "POST",
+                    body: JSON.stringify({
+                      messageId: message.id,
+                      model: chat.model,
+                    }),
+                  }).then((res) => {
                     if (!res.body) {
                       throw new Error("No body on response");
                     }
                     return res.body;
-                  });
-                  setStreamPromise(streamPromise);
-                  router.refresh();
-                });
-              }}
-            />
-          )}
+                  }),
+                );
+
+                setStreamPromise(streamPromise);
+              });
+            }}
+          />
         </CodeViewerLayout>
       </div>
     </div>

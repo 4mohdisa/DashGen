@@ -46,9 +46,6 @@ export default function CodeViewer({
     (p) =>
       p.type === "first-code-fence-generating" || p.type === "first-code-fence",
   );
-  const streamAppIsGenerating = streamAppParts.some(
-    (p) => p.type === "first-code-fence-generating",
-  );
 
   const code = streamApp ? streamApp.content : app?.code || "";
   const language = streamApp ? streamApp.language : app?.language || "";
@@ -76,31 +73,34 @@ export default function CodeViewer({
 
   return (
     <>
-      <div className="flex h-16 shrink-0 items-center justify-between border-b border-gray-300 px-4">
+      <div className="flex h-16 shrink-0 items-center justify-between border-b border-border/50 bg-card/80 backdrop-blur-sm px-4">
         <div className="inline-flex items-center gap-4">
           <button
-            className="text-gray-400 hover:text-gray-700"
+            className="text-muted-foreground hover:text-foreground transition-colors"
             onClick={onClose}
           >
             <CloseIcon className="size-5" />
           </button>
-          <span>
-            {title} v{currentVersion + 1}
+          <span className="text-foreground font-medium">
+            {title}{" "}
+            <span className="ml-2 px-2 py-1 text-xs bg-gradient-to-r from-blue-500/10 to-purple-500/10 text-blue-600 dark:text-blue-400 rounded-full border border-blue-500/20">
+              v{currentVersion + 1}
+            </span>
           </span>
         </div>
         {layout === "tabbed" && (
-          <div className="rounded-lg border-2 border-gray-300 p-1">
+          <div className="rounded-lg border border-border/50 bg-muted/30 p-1 backdrop-blur-sm">
             <button
               onClick={() => onTabChange("code")}
               data-active={activeTab === "code" ? true : undefined}
-              className="inline-flex h-7 w-16 items-center justify-center rounded text-xs font-medium data-[active]:bg-blue-500 data-[active]:text-white"
+              className="inline-flex h-8 w-20 items-center justify-center rounded-md text-sm font-medium text-muted-foreground data-[active]:bg-gradient-to-r data-[active]:from-blue-500 data-[active]:to-purple-500 data-[active]:text-white data-[active]:shadow-md transition-all duration-200"
             >
               Code
             </button>
             <button
               onClick={() => onTabChange("preview")}
               data-active={activeTab === "preview" ? true : undefined}
-              className="inline-flex h-7 w-16 items-center justify-center rounded text-xs font-medium data-[active]:bg-blue-500 data-[active]:text-white"
+              className="inline-flex h-8 w-20 items-center justify-center rounded-md text-sm font-medium text-muted-foreground data-[active]:bg-gradient-to-r data-[active]:from-blue-500 data-[active]:to-purple-500 data-[active]:text-white data-[active]:shadow-md transition-all duration-200"
             >
               Preview
             </button>
@@ -108,59 +108,62 @@ export default function CodeViewer({
         )}
       </div>
 
-      {layout === "tabbed" ? (
-        <div className="flex grow flex-col overflow-y-auto bg-white">
-          {activeTab === "code" ? (
-            <StickToBottom
-              className="relative grow overflow-hidden"
-              resize="smooth"
-              initial={streamAppIsGenerating ? "smooth" : false}
-            >
-              <StickToBottom.Content>
+      <div className="flex h-0 grow">
+        {layout === "two-up" ? (
+          <>
+            <div className="flex w-1/2 flex-col">
+              <div className="border-b border-border bg-muted px-4 py-2">
+                <h3 className="text-sm font-medium text-foreground">Code</h3>
+              </div>
+              <div className="grow overflow-y-auto bg-background">
                 <SyntaxHighlighter code={code} language={language} />
-              </StickToBottom.Content>
-            </StickToBottom>
-          ) : (
-            <>
-              {language && (
-                <div className="flex h-full items-center justify-center">
+              </div>
+            </div>
+            <div className="w-1/2 border-l border-border">
+              <div className="border-b border-border bg-muted px-4 py-2">
+                <h3 className="text-sm font-medium text-foreground">Preview</h3>
+              </div>
+              <div className="h-full bg-background">
+                <CodeRunner
+                  key={refresh}
+                  language={language}
+                  code={code}
+                  onRequestFix={onRequestFix}
+                />
+              </div>
+            </div>
+          </>
+        ) : (
+          <StickToBottom
+            className="w-full"
+            resize="smooth"
+            initial="smooth"
+          >
+            <StickToBottom.Content className="h-full">
+              {activeTab === "code" ? (
+                <div className="h-full overflow-y-auto bg-background">
+                  <SyntaxHighlighter code={code} language={language} />
+                </div>
+              ) : (
+                <div className="h-full bg-background">
                   <CodeRunner
-                    onRequestFix={onRequestFix}
+                    key={refresh}
                     language={language}
                     code={code}
-                    key={refresh}
+                    onRequestFix={onRequestFix}
                   />
                 </div>
               )}
-            </>
-          )}
-        </div>
-      ) : (
-        <div className="flex grow flex-col bg-white">
-          <div className="h-1/2 overflow-y-auto">
-            <SyntaxHighlighter code={code} language={language} />
-          </div>
-          <div className="flex h-1/2 flex-col">
-            <div className="border-t border-gray-300 px-4 py-4">Output</div>
-            <div className="flex grow items-center justify-center border-t">
-              {!streamAppIsGenerating && (
-                <CodeRunner
-                  onRequestFix={onRequestFix}
-                  language={language}
-                  code={code}
-                  key={refresh}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+            </StickToBottom.Content>
+          </StickToBottom>
+        )}
+      </div>
 
-      <div className="flex items-center justify-between border-t border-gray-300 px-4 py-4">
+      <div className="flex items-center justify-between border-t border-border bg-card px-4 py-4">
         <div className="inline-flex items-center gap-2.5 text-sm">
           <Share message={message && !streamApp ? message : undefined} />
           <button
-            className="inline-flex items-center gap-1 rounded border border-gray-300 px-1.5 py-0.5 text-sm text-gray-600 transition enabled:hover:bg-white disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 text-sm text-foreground transition hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
             onClick={() => setRefresh((r) => r + 1)}
           >
             <RefreshIcon className="size-3" />
@@ -170,20 +173,20 @@ export default function CodeViewer({
         <div className="flex items-center justify-end gap-3">
           {previousMessage ? (
             <button
-              className="text-gray-900"
+              className="text-foreground hover:text-primary transition-colors"
               onClick={() => onMessageChange(previousMessage)}
             >
               <ChevronLeftIcon className="size-4" />
             </button>
           ) : (
-            <button className="text-gray-900 opacity-25" disabled>
+            <button className="text-muted-foreground opacity-25" disabled>
               <ChevronLeftIcon className="size-4" />
             </button>
           )}
 
-          <p className="text-sm">
+          <p className="text-sm text-foreground">
             Version <span className="tabular-nums">{currentVersion + 1}</span>{" "}
-            <span className="text-gray-400">of</span>{" "}
+            <span className="text-muted-foreground">of</span>{" "}
             <span className="tabular-nums">
               {Math.max(currentVersion + 1, assistantMessages.length)}
             </span>
@@ -191,13 +194,13 @@ export default function CodeViewer({
 
           {nextMessage ? (
             <button
-              className="text-gray-900"
+              className="text-foreground hover:text-primary transition-colors"
               onClick={() => onMessageChange(nextMessage)}
             >
               <ChevronRightIcon className="size-4" />
             </button>
           ) : (
-            <button className="text-gray-900 opacity-25" disabled>
+            <button className="text-muted-foreground opacity-25" disabled>
               <ChevronRightIcon className="size-4" />
             </button>
           )}

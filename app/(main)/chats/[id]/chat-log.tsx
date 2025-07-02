@@ -62,7 +62,7 @@ export default function ChatLog({
 function UserMessage({ content }: { content: string }) {
   return (
     <div className="relative inline-flex max-w-[80%] items-end gap-3 self-end">
-      <div className="whitespace-pre-wrap rounded bg-white px-4 py-2 text-gray-600 shadow">
+      <div className="whitespace-pre-wrap rounded bg-primary px-4 py-2 text-primary-foreground shadow-md">
         {content}
       </div>
     </div>
@@ -84,95 +84,87 @@ function AssistantMessage({
 }) {
   const parts = splitByFirstCodeFence(content);
 
+  function toTitleCase(str: string): string {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
   return (
-    <div>
-      {parts.map((part, i) => (
-        <div key={i}>
-          {part.type === "text" ? (
-            <Markdown className="prose">{part.content}</Markdown>
-          ) : part.type === "first-code-fence-generating" ? (
-            <div className="my-4">
-              <button
-                disabled
-                className="inline-flex w-full animate-pulse items-center gap-2 rounded-lg border-4 border-gray-300 p-1.5"
-              >
-                <div className="flex size-8 items-center justify-center rounded bg-gray-300 font-bold">
-                  V{version}
+    <div className="relative inline-flex max-w-[100%] items-start gap-3 self-start">
+      <div className="whitespace-pre-wrap rounded bg-card border border-border px-4 py-2 text-card-foreground shadow-md">
+        {parts.map((part, index) => (
+          <div key={index}>
+            {part.type === "text" && (
+              <Markdown className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-code:text-foreground prose-pre:bg-muted prose-pre:text-foreground">
+                {part.content}
+              </Markdown>
+            )}
+            {(part.type === "first-code-fence" ||
+              part.type === "first-code-fence-generating") && (
+              message ? (
+                <div className="my-4">
+                  <button
+                    className={`${
+                      isActive 
+                        ? "bg-accent border-primary shadow-md" 
+                        : "bg-secondary border-border hover:border-primary hover:bg-accent"
+                    } inline-flex w-full items-center gap-2 rounded-lg border-2 p-1.5 transition-all`}
+                    onClick={() => onMessageClick(message)}
+                  >
+                    <div
+                      className={`${
+                        isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                      } flex size-8 items-center justify-center rounded font-bold transition-colors`}
+                    >
+                      V{version}
+                    </div>
+                    <div className="flex flex-col gap-0.5 text-left leading-none">
+                      <div className="text-sm font-medium leading-none text-foreground">
+                        {toTitleCase(part.filename.name)}{" "}
+                        {version !== 1 && `v${version}`}
+                      </div>
+                      <div className="text-xs leading-none text-muted-foreground">
+                        {part.filename.name}
+                        {version !== 1 && `-v${version}`}
+                        {"."}
+                        {part.filename.extension}
+                      </div>
+                    </div>
+                    <div className="ml-auto text-muted-foreground">
+                      <ArrowLeftIcon />
+                    </div>
+                  </button>
                 </div>
-                <div className="flex flex-col gap-0.5 text-left leading-none">
-                  <div className="text-sm font-medium leading-none">
-                    Generating...
-                  </div>
+              ) : (
+                <div className="my-4">
+                  <button
+                    className="inline-flex w-full items-center gap-2 rounded-lg border-2 border-border bg-muted p-1.5 opacity-75"
+                    disabled
+                  >
+                    <div className="flex size-8 items-center justify-center rounded bg-muted-foreground/20 text-muted-foreground font-bold">
+                      V{version}
+                    </div>
+                    <div className="flex flex-col gap-0.5 text-left leading-none">
+                      <div className="text-sm font-medium leading-none text-muted-foreground">
+                        {toTitleCase(part.filename.name)}{" "}
+                        {version !== 1 && `v${version}`}
+                      </div>
+                      <div className="text-xs leading-none text-muted-foreground/70">
+                        {part.filename.name}
+                        {version !== 1 && `-v${version}`}
+                        {"."}
+                        {part.filename.extension}
+                      </div>
+                    </div>
+                    <div className="ml-auto text-muted-foreground/50">
+                      <ArrowLeftIcon />
+                    </div>
+                  </button>
                 </div>
-              </button>
-            </div>
-          ) : message ? (
-            <div className="my-4">
-              <button
-                className={`${isActive ? "bg-white" : "bg-gray-300 hover:border-gray-400 hover:bg-gray-400"} inline-flex w-full items-center gap-2 rounded-lg border-4 border-gray-300 p-1.5`}
-                onClick={() => onMessageClick(message)}
-              >
-                <div
-                  className={`${isActive ? "bg-gray-300" : "bg-gray-200"} flex size-8 items-center justify-center rounded font-bold`}
-                >
-                  V{version}
-                </div>
-                <div className="flex flex-col gap-0.5 text-left leading-none">
-                  <div className="text-sm font-medium leading-none">
-                    {toTitleCase(part.filename.name)}{" "}
-                    {version !== 1 && `v${version}`}
-                  </div>
-                  <div className="text-xs leading-none text-gray-500">
-                    {part.filename.name}
-                    {version !== 1 && `-v${version}`}
-                    {"."}
-                    {part.filename.extension}
-                  </div>
-                </div>
-                <div className="ml-auto">
-                  <ArrowLeftIcon />
-                </div>
-              </button>
-            </div>
-          ) : (
-            <div className="my-4">
-              <button
-                className="inline-flex w-full items-center gap-2 rounded-lg border-4 border-gray-300 p-1.5"
-                disabled
-              >
-                <div className="flex size-8 items-center justify-center rounded bg-gray-300 font-bold">
-                  V{version}
-                </div>
-                <div className="flex flex-col gap-0.5 text-left leading-none">
-                  <div className="text-sm font-medium leading-none">
-                    {toTitleCase(part.filename.name)}{" "}
-                    {version !== 1 && `v${version}`}
-                  </div>
-                  <div className="text-xs leading-none text-gray-500">
-                    {part.filename.name}
-                    {version !== 1 && `-v${version}`}
-                    {"."}
-                    {part.filename.extension}
-                  </div>
-                </div>
-                <div className="ml-auto">
-                  <ArrowLeftIcon />
-                </div>
-              </button>
-            </div>
-          )}
-        </div>
-      ))}
+              )
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
-}
-
-export function toTitleCase(rawName: string): string {
-  // Split on one or more hyphens or underscores
-  const parts = rawName.split(/[-_]+/);
-
-  // Capitalize each part and join them back with spaces
-  return parts
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-    .join(" ");
 }

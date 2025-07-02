@@ -22,7 +22,7 @@ export async function createChat(
       quality,
       prompt,
       title: "",
-      shadcn: true,
+      shadcn: true, // Using Radix UI Themes
     },
   });
 
@@ -31,9 +31,9 @@ export async function createChat(
     options.baseURL = "https://together.helicone.ai/v1";
     options.defaultHeaders = {
       "Helicone-Auth": `Bearer ${process.env.HELICONE_API_KEY}`,
-      "Helicone-Property-appname": "LlamaCoder",
+      "Helicone-Property-appname": "DashGen",
       "Helicone-Session-Id": chat.id,
-      "Helicone-Session-Name": "LlamaCoder Chat",
+      "Helicone-Session-Name": "DashGen Chat",
     };
   }
 
@@ -117,7 +117,7 @@ export async function createChat(
   let userMessage: string;
   if (quality === "high") {
     let initialRes = await together.chat.completions.create({
-      model: "Qwen/Qwen2.5-Coder-32B-Instruct",
+      model: "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
       messages: [
         {
           role: "system",
@@ -131,7 +131,7 @@ export async function createChat(
         },
       ],
       temperature: 0.2,
-      max_tokens: 3000,
+      max_tokens: 2000,
     });
 
     userMessage = initialRes.choices[0].message?.content ?? prompt;
