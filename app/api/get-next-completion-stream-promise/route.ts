@@ -41,23 +41,35 @@ export async function POST(req: Request) {
     options.baseURL = "https://together.helicone.ai/v1";
     options.defaultHeaders = {
       "Helicone-Auth": `Bearer ${process.env.HELICONE_API_KEY}`,
-      "Helicone-Property-appname": "LlamaCoder",
+      "Helicone-Property-appname": "DashGen",
       "Helicone-Session-Id": message.chatId,
-      "Helicone-Session-Name": "LlamaCoder Chat",
+      "Helicone-Session-Name": "DashGen Chat",
     };
   }
 
   const together = new Together(options);
 
-  const res = await together.chat.completions.create({
-    model,
-    messages: messages.map((m) => ({ role: m.role, content: m.content })),
-    stream: true,
-    temperature: 0.2,
-    max_tokens: 9000,
-  });
+  try {
+    const res = await together.chat.completions.create({
+      model,
+      messages: messages.map((m) => ({ role: m.role, content: m.content })),
+      stream: true,
+      temperature: 0.2,
+      max_tokens: 9000,
+      stop: ["<|eot_id|>", "<|end_of_text|>"], // Add stop tokens to prevent incomplete responses
+    });
 
-  return new Response(res.toReadableStream());
+    return new Response(res.toReadableStream());
+  } catch (error) {
+    console.error('Together AI streaming error:', error);
+    return new Response(
+      JSON.stringify({ error: 'Failed to create completion stream' }),
+      { 
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+  }
 }
 
 export const runtime = "edge";

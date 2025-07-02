@@ -1,32 +1,65 @@
+import { NextRequest, NextResponse } from 'next/server';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
+import fs from 'fs/promises';
+import path from 'path';
 
-export interface ParsedData {
+const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
+
+interface DataImportResult {
   headers: string[];
   rows: any[][];
   summary: string;
   dataTypes: Record<string, string>;
+  fileId: string;
+  totalRows: number;
 }
 
-export async function parseDataFile(file: File): Promise<ParsedData> {
-  const fileExtension = file.name.split('.').pop()?.toLowerCase();
+async function getStoredFile(fileId: string): Promise<Buffer | null> {
+  try {
+    const files = await fs.readdir(UPLOAD_DIR);
+    const fileName = files.find(f => f.startsWith(fileId));
+    
+    if (!fileName) return null;
+    
+    const filePath = path.join(UPLOAD_DIR, fileName);
+    return await fs.readFile(filePath);
+  } catch (error) {
+    console.error('Error reading stored file:', error);
+    return null;
+  }
+}
+
+function getFileExtension(fileName: string): string {
+  return fileName.split('.').pop()?.toLowerCase() || '';
+}
+
+async function importDataFromStoredFile(fileId: string, originalFileName: string): Promise<DataImportResult> {
+  const fileBuffer = await getStoredFile(fileId);
+  if (!fileBuffer) {
+    throw new Error('File not found');
+  }
+
+  const fileExtension = getFileExtension(originalFileName);
   
   switch (fileExtension) {
     case 'csv':
-      return parseCSV(file);
+      return await importCSVFromBuffer(fileBuffer, fileId);
     case 'json':
-      return parseJSON(file);
+      return await importJSONFromBuffer(fileBuffer, fileId);
     case 'xlsx':
     case 'xls':
-      return parseExcel(file);
+      return await importExcelFromBuffer(fileBuffer, fileId);
     default:
       throw new Error(`Unsupported file type: ${fileExtension}`);
   }
 }
 
-async function parseCSV(file: File): Promise<ParsedData> {
+async function importCSVFromBuffer(buffer: Buffer, fileId: string): Promise<DataImportResult> {
   return new Promise((resolve, reject) => {
-    Papa.parse(file, {
+    const csvText = buffer.toString('utf-8');
+    
+    Papa.parse(csvText, {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
@@ -41,19 +74,26 @@ async function parseCSV(file: File): Promise<ParsedData> {
           const dataTypes = analyzeDataTypes(data, headers);
           const summary = generateDataSummary(headers, rows, dataTypes);
           
-          resolve({ headers, rows, summary, dataTypes });
+          resolve({ 
+            headers, 
+            rows, 
+            summary, 
+            dataTypes, 
+            fileId,
+            totalRows: rows.length 
+          });
         } catch (error) {
           reject(error);
         }
       },
-      error: (error) => reject(error)
+      error: (error: any) => reject(error)
     });
   });
 }
 
-async function parseJSON(file: File): Promise<ParsedData> {
-  const text = await file.text();
-  const jsonData = JSON.parse(text);
+async function importJSONFromBuffer(buffer: Buffer, fileId: string): Promise<DataImportResult> {
+  const jsonText = buffer.toString('utf-8');
+  const jsonData = JSON.parse(jsonText);
   
   // Handle different JSON structures
   let data: any[];
@@ -77,12 +117,18 @@ async function parseJSON(file: File): Promise<ParsedData> {
   const dataTypes = analyzeDataTypes(data, headers);
   const summary = generateDataSummary(headers, rows, dataTypes);
   
-  return { headers, rows, summary, dataTypes };
+  return { 
+    headers, 
+    rows, 
+    summary, 
+    dataTypes, 
+    fileId,
+    totalRows: rows.length 
+  };
 }
 
-async function parseExcel(file: File): Promise<ParsedData> {
-  const arrayBuffer = await file.arrayBuffer();
-  const workbook = XLSX.read(arrayBuffer);
+async function importExcelFromBuffer(buffer: Buffer, fileId: string): Promise<DataImportResult> {
+  const workbook = XLSX.read(buffer);
   const firstSheetName = workbook.SheetNames[0];
   const worksheet = workbook.Sheets[firstSheetName];
   
@@ -97,7 +143,14 @@ async function parseExcel(file: File): Promise<ParsedData> {
   const dataTypes = analyzeDataTypes(jsonData, headers);
   const summary = generateDataSummary(headers, rows, dataTypes);
   
-  return { headers, rows, summary, dataTypes };
+  return { 
+    headers, 
+    rows, 
+    summary, 
+    dataTypes, 
+    fileId,
+    totalRows: rows.length 
+  };
 }
 
 function analyzeDataTypes(data: any[], headers: string[]): Record<string, string> {
@@ -173,35 +226,47 @@ function generateDataSummary(headers: string[], rows: any[][], dataTypes: Record
   return summary;
 }
 
-export function generateDataPrompt(parsedData: ParsedData, userPrompt: string): string {
-  // Import the reasoning engine locally to avoid circular dependencies
-  const { createDataReasoningEngine } = require('./data-reasoning');
-  
-  // Create the reasoning engine and generate intelligent prompt
-  const reasoningEngine = createDataReasoningEngine(parsedData);
-  return reasoningEngine.generateIntelligentPrompt(userPrompt);
+export async function POST(request: NextRequest) {
+  try {
+    const { fileId, fileName } = await request.json();
+    
+    if (!fileId || !fileName) {
+      return NextResponse.json(
+        { error: 'fileId and fileName are required' },
+        { status: 400 }
+      );
+    }
+
+    const importResult = await importDataFromStoredFile(fileId, fileName);
+    
+    // Convert rows back to objects for frontend consumption
+    const dataObjects = importResult.rows.map(row => {
+      const obj: any = {};
+      importResult.headers.forEach((header, index) => {
+        obj[header] = row[index];
+      });
+      return obj;
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        headers: importResult.headers,
+        rows: dataObjects,
+        summary: importResult.summary,
+        dataTypes: importResult.dataTypes,
+        totalRows: importResult.totalRows
+      }
+    });
+  } catch (error) {
+    console.error('Error importing data:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error occurred' },
+      { status: 500 }
+    );
+  }
 }
 
-export function generateBasicDataPrompt(parsedData: ParsedData, userPrompt: string): string {
-  const { headers, rows, summary, dataTypes } = parsedData;
-  
-  let prompt = `${userPrompt}\n\n`;
-  prompt += `I have uploaded a dataset with the following structure:\n\n`;
-  prompt += summary;
-  prompt += `\n\nColumn details:\n`;
-  
-  headers.forEach(header => {
-    const type = dataTypes[header];
-    const sampleValues = rows.slice(0, 3).map(row => row[headers.indexOf(header)]).filter(val => val !== null && val !== undefined);
-    prompt += `- ${header} (${type}): ${sampleValues.join(', ')}${sampleValues.length < rows.length ? '...' : ''}\n`;
-  });
-  
-  prompt += `\n\nPlease create a dashboard that visualizes this data effectively. Use appropriate chart types based on the data types:`;
-  prompt += `\n- Use line/bar charts for numeric data over time`;
-  prompt += `\n- Use pie/donut charts for categorical distributions`;
-  prompt += `\n- Include summary cards for key metrics`;
-  prompt += `\n- Add filters for interactive exploration`;
-  prompt += `\n\nMake sure to use the actual column names and data types from my dataset.`;
-  
-  return prompt;
+export async function GET() {
+  return NextResponse.json({ message: 'Data import API endpoint' });
 }

@@ -124,6 +124,15 @@ export async function createChat(
     try {
       const relevantPatterns = await getRelevantPatterns(dataContext);
       enhancedPrompt = generateMemoryEnhancedPrompt(prompt, relevantPatterns);
+      
+      // If there's a fileId, add data access instructions to the prompt
+      if (dataContext.fileId) {
+        enhancedPrompt += `\n\n**CRITICAL: DATA ACCESS INSTRUCTIONS**\n`;
+        enhancedPrompt += `The uploaded data file is stored with ID: ${dataContext.fileId}\n`;
+        enhancedPrompt += `To access the data in your dashboard, use this API endpoint: /api/import-data\n`;
+        enhancedPrompt += `Example fetch: fetch('/api/import-data', { method: 'POST', body: JSON.stringify({ fileId: '${dataContext.fileId}', fileName: 'data.csv' }) })\n`;
+        enhancedPrompt += `This will return the actual data that you MUST use in your dashboard.\n`;
+      }
     } catch (error) {
       console.error('Error enhancing prompt with memory:', error);
       // Continue with original prompt if memory fails

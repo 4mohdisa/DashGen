@@ -18,7 +18,10 @@ import { useS3Upload } from "next-s3-upload";
 import UploadIcon from "@/components/icons/upload-icon";
 import { XCircleIcon } from "@heroicons/react/20/solid";
 import { MODELS, SUGGESTED_PROMPTS } from "@/lib/constants";
-import { parseDataFile, generateDataPrompt } from "@/lib/data-parser";
+import { uploadFile } from "@/lib/file-storage";
+import { importDataFromStoredFile, generateDataImportPrompt } from "@/lib/data-importer-client";
+import { createDataReasoningEngine } from "@/lib/data-reasoning";
+import { createEnhancedMemoryContext } from "@/lib/memory";
 
 export default function Home() {
   const { setStreamPromise } = use(Context);
@@ -32,6 +35,7 @@ export default function Home() {
   );
   const [screenshotLoading, setScreenshotLoading] = useState(false);
   const [dataFile, setDataFile] = useState<File | undefined>(undefined);
+  const [storedFileId, setStoredFileId] = useState<string | undefined>(undefined);
   const [dataLoading, setDataLoading] = useState(false);
   const selectedModel = MODELS.find((m) => m.value === model);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,18 +67,42 @@ export default function Home() {
     
     setDataLoading(true);
     try {
-      const parsedData = await parseDataFile(file);
+      // Store the file persistently
+      const storedFile = await uploadFile(file);
+      setStoredFileId(storedFile.id);
       setDataFile(file);
       
-      // Auto-generate prompt based on data
-      const dataPrompt = generateDataPrompt(parsedData, prompt || "Create a comprehensive dashboard");
+      // Import and analyze the data
+      const importResult = await importDataFromStoredFile(storedFile.id, file.name);
+      
+      // Convert rows back to array format for reasoning engine
+      const rowsArray = importResult.rows.map(obj => 
+        importResult.headers.map(header => obj[header])
+      );
+      
+      // Create reasoning engine and generate intelligent prompt
+      const parsedData = {
+        headers: importResult.headers,
+        rows: rowsArray,
+        summary: importResult.summary,
+        dataTypes: importResult.dataTypes
+      };
+      
+      const reasoningEngine = createDataReasoningEngine(parsedData);
+      const intelligentPrompt = reasoningEngine.generateIntelligentPrompt(prompt || "Create a comprehensive dashboard");
+      
+      // Generate the final data import prompt with file access instructions
+      const dataPrompt = generateDataImportPrompt({
+        ...importResult,
+        fileId: storedFile.id
+      }, intelligentPrompt);
       setPrompt(dataPrompt);
       
       // Adjust textarea height after setting prompt
       setTimeout(adjustTextareaHeight, 0);
     } catch (error) {
-      console.error('Error parsing data file:', error);
-      alert(`Error parsing file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Error processing data file:', error);
+      alert(`Error processing file: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setDataLoading(false);
     }
@@ -119,16 +147,36 @@ export default function Home() {
 
                 // Prepare data context if data file was uploaded
                 let dataContext;
-                if (dataFile) {
+                if (storedFileId && dataFile) {
                   try {
-                    const parsedData = await parseDataFile(dataFile);
-                    dataContext = {
-                      dataColumns: parsedData.headers,
-                      dataTypes: parsedData.dataTypes,
-                      userPrompt: prompt,
+                    const importResult = await importDataFromStoredFile(storedFileId, dataFile.name);
+                    
+                    // Convert rows back to array format for reasoning engine
+                    const rowsArray = importResult.rows.map(obj => 
+                      importResult.headers.map(header => obj[header])
+                    );
+                    
+                    const parsedData = {
+                      headers: importResult.headers,
+                      rows: rowsArray,
+                      summary: importResult.summary,
+                      dataTypes: importResult.dataTypes
                     };
+                    
+                    const reasoningEngine = createDataReasoningEngine(parsedData);
+                    const insights = reasoningEngine.getInsights();
+                    
+                    dataContext = createEnhancedMemoryContext(
+                      parsedData.headers,
+                      parsedData.dataTypes,
+                      prompt,
+                      insights
+                    );
+                    
+                    // Add file ID to context for dashboard generation
+                    dataContext.fileId = storedFileId;
                   } catch (error) {
-                    console.error('Error parsing data for context:', error);
+                    console.error('Error importing data for context:', error);
                   }
                 }
 
@@ -201,9 +249,13 @@ export default function Home() {
                   )}
                   {dataLoading && (
                     <div className="relative mx-3 mt-3">
-                      <div className="rounded-xl">
-                        <div className="group mb-2 flex h-16 w-[68px] animate-pulse items-center justify-center rounded bg-muted">
+                      <div className="rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 border border-border/30 p-3">
+                        <div className="flex items-center gap-3">
                           <Spinner />
+                          <div className="text-sm">
+                            <p className="font-medium text-foreground">🧠 Analyzing data...</p>
+                            <p className="text-muted-foreground text-xs">AI is understanding your data structure and recommending optimal visualizations</p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -225,6 +277,7 @@ export default function Home() {
                         className="absolute -right-3 -top-4 left-14 z-10 size-5 rounded-full bg-card text-foreground hover:text-muted-foreground"
                         onClick={() => {
                           setDataFile(undefined);
+                          setStoredFileId(undefined);
                           if (dataFileInputRef.current) {
                             dataFileInputRef.current.value = "";
                           }

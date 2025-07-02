@@ -1,25 +1,109 @@
-# Contributing Guide
+# Contributing to DashGen
 
-Thank you for your interest in contributing to this project! We accept contributions via bug reports, feature requests and pull requests. We also have a roadmap outlined below.
+We love your input! We want to make contributing to DashGen as easy and transparent as possible, whether it's:
 
-For simple fixes or small items on the roadmap below, feel free to submit a pull request. For anything more complex, please open an issue first to discuss the changes you want to make.
+- Reporting a bug
+- Discussing the current state of the code
+- Submitting a fix
+- Proposing new features
+- Becoming a maintainer
 
-## Running the repo
+## Development Process
 
-To run the repo locally, simply `npm install` to install dependencies and then `npm run dev` to run the app.
+We use GitHub to host code, to track issues and feature requests, as well as accept pull requests.
 
-## Roadmap
+## Pull Requests
 
-- [ ] Add self-correcting to the app so it can fix its own errors
-- [ ] Compressing prompt: Use small model like llama 3.1 70B to retain what happened in the past, good memory management is key
-- [ ] Add evals with Braintrust to be able to measure how good the system is over time and when making new changes
-- [ ] Add more good examples to the shadcn-examples.ts file (single components that span a whole app and use shadcn)
-- [ ] Add dynamic OG images to the specific generations & include the prompt + a screenshot in the image
-- [ ] Show a "featured apps" section on /gallery (or have some at the bottom of the homepage as templates). Have a /id/${prompt} dynamic route that can display a bunch of nice example apps in the sandbox ready to go
-- [ ] Try finetuning a smaller model on good prompts from deepseek-v2 or o1/Claude
-- [ ] Add dark mode to the site overall, nice design change
-- [ ] Support more languages starting with Python (like streamlit) and see if I can run them on CSB SDK
+Pull requests are the best way to propose changes to the codebase. We actively welcome your pull requests:
+
+1. Fork the repo and create your branch from `main`.
+2. If you've added code that should be tested, add tests.
+3. If you've changed APIs, update the documentation.
+4. Ensure the test suite passes.
+5. Make sure your code lints.
+6. Issue that pull request!
+
+## Code Style
+
+- Use TypeScript for all new code
+- Follow the existing code style (ESLint + Prettier)
+- Use conventional commits for commit messages
+- Write clear, descriptive variable and function names
+- Add comments for complex logic
+
+## Commit Message Format
+
+We use conventional commits. Examples:
+
+```
+feat: add data export functionality
+fix: resolve chart rendering issue
+docs: update installation instructions
+style: format code with prettier
+refactor: simplify data parsing logic
+test: add unit tests for dashboard generation
+```
+
+## Development Setup
+
+1. Clone your fork of the repo
+2. Install dependencies: `npm install`
+3. Set up environment variables (see README.md)
+4. Start development server: `npm run dev`
+5. Run tests: `npm test`
+6. Run linting: `npm run lint`
+
+## Feature Requests
+
+We use GitHub issues to track feature requests. Please provide:
+
+- Clear description of the feature
+- Use case and motivation
+- Examples of how it would work
+- Any relevant mockups or designs
+
+## Bug Reports
+
+We use GitHub issues to track public bugs. Report a bug by opening a new issue.
+
+**Great Bug Reports** tend to have:
+
+- A quick summary and/or background
+- Steps to reproduce
+  - Be specific!
+  - Give sample code if you can
+- What you expected would happen
+- What actually happens
+- Notes (possibly including why you think this might be happening, or stuff you tried that didn't work)
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the project's license.
+By contributing, you agree that your contributions will be licensed under the MIT License.
+
+## Code of Conduct
+
+### Our Pledge
+
+We pledge to make participation in our project a harassment-free experience for everyone.
+
+### Our Standards
+
+Examples of behavior that contributes to creating a positive environment include:
+
+- Using welcoming and inclusive language
+- Being respectful of differing viewpoints and experiences
+- Gracefully accepting constructive criticism
+- Focusing on what is best for the community
+- Showing empathy towards other community members
+
+### Enforcement
+
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting the project team. All complaints will be reviewed and investigated promptly and fairly.
+
+## Questions?
+
+Feel free to reach out to Mohammed Isa at:
+- GitHub: [@4mohdisa](https://github.com/4mohdisa)
+- Twitter: [@4mohdisa](https://twitter.com/4mohdisa)
+
+Thank you for contributing to DashGen! 🚀

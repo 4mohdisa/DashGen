@@ -16,6 +16,10 @@ export interface MemoryContext {
   userPrompt: string;
   chartTypes?: string[];
   errors?: string[];
+  businessContext?: string;
+  recommendedCharts?: string[];
+  recommendedKPIs?: string[];
+  fileId?: string;
 }
 
 // Add a new table to the database for storing memory patterns
@@ -219,4 +223,30 @@ export function extractCommonMistakes(errors: string[]): string[] {
   });
   
   return [...new Set(mistakes)]; // Remove duplicates
+}
+
+// Function to create enhanced memory context with reasoning insights
+export function createEnhancedMemoryContext(
+  dataColumns: string[],
+  dataTypes: Record<string, string>,
+  userPrompt: string,
+  reasoningInsights?: any
+): MemoryContext {
+  const context: MemoryContext = {
+    dataColumns,
+    dataTypes,
+    userPrompt
+  };
+
+  if (reasoningInsights) {
+    context.businessContext = reasoningInsights.businessContext;
+    context.recommendedCharts = reasoningInsights.chartRecommendations?.map((chart: any) => 
+      `${chart.type}: ${chart.title}`
+    );
+    context.recommendedKPIs = reasoningInsights.keyMetrics?.map((kpi: any) => 
+      `${kpi.metric} (${kpi.cardType})`
+    );
+  }
+
+  return context;
 }

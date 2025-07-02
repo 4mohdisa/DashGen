@@ -1,7 +1,14 @@
 {
-  "name": "llamacoder-new",
-  "version": "0.1.0",
+  "name": "dashgen",
+  "version": "1.0.0",
   "private": true,
+  "description": "AI-powered dashboard generator that creates beautiful, interactive dashboards from data files",
+  "author": "Mohammed Isa",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/4mohdisa/dashgen"
+  },
+  "homepage": "https://github.com/4mohdisa/dashgen",
   "scripts": {
     "postinstall": "prisma generate",
     "dev": "next dev",
