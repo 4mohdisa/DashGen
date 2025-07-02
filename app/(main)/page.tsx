@@ -166,7 +166,7 @@ export default function Home() {
                       required
                       name="prompt"
                       rows={1}
-                      className="peer absolute inset-0 w-full resize-none bg-transparent p-3 placeholder-muted-foreground/70 text-foreground focus-visible:outline-none disabled:opacity-50 text-base"
+                      className={`peer absolute inset-0 w-full resize-none bg-transparent p-3 placeholder-muted-foreground/70 text-foreground focus-visible:outline-none disabled:opacity-50 text-base transition-opacity duration-200 ${isPending ? 'opacity-0' : 'opacity-100'}`}
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
                       onKeyDown={(event) => {
@@ -177,10 +177,11 @@ export default function Home() {
                           target.closest("form")?.requestSubmit();
                         }
                       }}
+                      disabled={isPending}
                     />
                   </div>
                 </div>
-                <div className="absolute bottom-2 left-2 right-2.5 flex items-center justify-between">
+                <div className={`absolute bottom-2 left-2 right-2.5 flex items-center justify-between transition-opacity duration-200 ${isPending ? 'opacity-0' : 'opacity-100'}`}>
                   <div className="flex items-center gap-3">
                     <Select.Root
                       name="model"
@@ -309,10 +310,12 @@ export default function Home() {
                 </div>
 
                 {isPending && (
-                  <LoadingMessage
-                    isHighQuality={quality === "high"}
-                    screenshotUrl={screenshotUrl}
-                  />
+                  <div className="absolute inset-0 rounded-xl overflow-hidden">
+                    <LoadingMessage
+                      isHighQuality={quality === "high"}
+                      screenshotUrl={screenshotUrl}
+                    />
+                  </div>
                 )}
               </div>
               <div className="mt-6 flex w-full flex-wrap justify-center gap-3">
@@ -383,17 +386,31 @@ function LoadingMessage({
   screenshotUrl: string | undefined;
 }) {
   return (
-    <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-card/90 backdrop-blur-sm px-1 py-3 md:px-3">
-      <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
-        <span className="animate-pulse text-balance text-center text-sm md:text-base">
-          {isHighQuality
-            ? `Coming up with project plan, may take 15 seconds...`
-            : screenshotUrl
-              ? "Analyzing your screenshot..."
-              : `Creating your dashboard...`}
-        </span>
-
-        <Spinner />
+    <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-card backdrop-blur-lg px-1 py-3 md:px-3 z-20 border border-border/50">
+      <div className="flex flex-col items-center justify-center gap-4 text-center">
+        <div className="relative">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20 flex items-center justify-center">
+            <Spinner />
+          </div>
+          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 animate-ping" />
+        </div>
+        
+        <div className="space-y-2">
+          <p className="text-foreground font-medium text-sm md:text-base">
+            {isHighQuality
+              ? "🧠 Planning your dashboard..."
+              : screenshotUrl
+                ? "👁️ Analyzing your screenshot..."
+                : "✨ Creating your dashboard..."}
+          </p>
+          <p className="text-muted-foreground text-xs md:text-sm">
+            {isHighQuality
+              ? "Using advanced AI to create the perfect layout"
+              : screenshotUrl
+                ? "Understanding your design requirements"
+                : "This will only take a moment"}
+          </p>
+        </div>
       </div>
     </div>
   );
