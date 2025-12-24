@@ -62,7 +62,7 @@ export default function ChatLog({
 function UserMessage({ content }: { content: string }) {
   return (
     <div className="relative inline-flex max-w-[80%] items-end gap-3 self-end">
-      <div className="whitespace-pre-wrap rounded bg-primary px-4 py-2 text-primary-foreground shadow-md">
+      <div className="whitespace-pre-wrap rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 text-white shadow-md dark:from-blue-500 dark:to-purple-500">
         {content}
       </div>
     </div>

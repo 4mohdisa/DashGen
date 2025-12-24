@@ -72,6 +72,10 @@ export async function createChat(
           - blog app
           - quiz app
           - pomodoro timer
+          - calculator app
+          - sales dashboard
+          - analytics dashboard
+          - financial dashboard
           `,
         },
         {
@@ -82,14 +86,33 @@ export async function createChat(
     });
 
     const mostSimilarExample =
-      findSimilarExamples.choices[0].message?.content || "none";
+      findSimilarExamples.choices[0].message?.content?.trim() || "none";
+    console.log('Selected similar example:', mostSimilarExample);
     return mostSimilarExample;
   }
 
-  const [title, mostSimilarExample] = await Promise.all([
+  const [title, rawMostSimilarExample] = await Promise.all([
     fetchTitle(),
     fetchTopExample(),
   ]);
+
+  // Ensure we have a valid example, fallback to "none" if not recognized
+  const validExamples = [
+    "landing page",
+    "blog app", 
+    "quiz app",
+    "pomodoro timer",
+    "calculator app",
+    "sales dashboard",
+    "analytics dashboard", 
+    "financial dashboard"
+  ];
+  
+  const mostSimilarExample = validExamples.includes(rawMostSimilarExample) 
+    ? rawMostSimilarExample 
+    : "none";
+    
+  console.log('Raw example:', rawMostSimilarExample, 'Final example:', mostSimilarExample);
 
   let fullScreenshotDescription;
   if (screenshotUrl) {

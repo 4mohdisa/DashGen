@@ -63,7 +63,7 @@ export default function ChatBox({
                   </p>
                 </div>
                 <textarea
-                  placeholder="Follow up question..."
+                  placeholder="Add features (table, charts), modify styling, or ask questions..."
                   required
                   name="message"
                   rows={1}
@@ -83,14 +83,14 @@ export default function ChatBox({
             </div>
 
             <div className="absolute bottom-1.5 right-1.5 flex has-[:disabled]:opacity-50">
-              <div className="pointer-events-none absolute inset-0 -bottom-[1px] rounded bg-primary" />
+              <div className="pointer-events-none absolute inset-0 -bottom-[1px] rounded-lg bg-gradient-to-r from-blue-600 to-purple-600" />
 
               <button
-                className="relative inline-flex size-6 items-center justify-center rounded bg-primary font-medium text-primary-foreground shadow-lg outline-ring hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 transition-colors"
+                className="relative inline-flex size-8 items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 font-medium text-white shadow-lg hover:from-blue-700 hover:to-purple-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 transition-all duration-200 hover:shadow-xl hover:scale-105"
                 type="submit"
               >
                 <Spinner loading={disabled}>
-                  <ArrowRightIcon />
+                  <ArrowRightIcon className="w-4 h-4" />
                 </Spinner>
               </button>
             </div>

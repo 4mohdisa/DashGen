@@ -49,7 +49,7 @@ export async function importDataFromStoredFile(fileId: string, fileName: string)
 
 // Function to generate data-aware prompts for client use
 export function generateDataImportPrompt(importResult: DataImportResult, userPrompt: string): string {
-  const { headers, totalRows, summary, dataTypes, fileId } = importResult;
+  const { headers, summary, dataTypes, fileId } = importResult;
   
   let prompt = `${userPrompt}\n\n`;
   prompt += `## 📊 DATA IMPORT INFORMATION\n\n`;

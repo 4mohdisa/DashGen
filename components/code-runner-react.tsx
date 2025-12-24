@@ -39,7 +39,7 @@ function App() {
 
 export default App;
 
-${code.replace(/export default function\s+\w+\s*\(\s*\)\s*\{/, 'function AppComponent() {')}
+${code.replace(/export\s+default\s+function\s+[\w]+\s*\(\s*\)\s*\{/, 'function AppComponent() {')}
         `,
         "/tsconfig.json": {
           code: `{

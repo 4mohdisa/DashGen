@@ -6,10 +6,17 @@ import { Message } from "@prisma/client";
 
 export function Share({ message }: { message?: Message }) {
   async function shareAction() {
-    if (!message) return;
+    if (!message) {
+      console.log('Share: No message provided');
+      return;
+    }
 
+    console.log('Share: message.id:', message.id);
+    console.log('Share: message.role:', message.role);
+    
     const baseUrl = window.location.href;
     const shareUrl = new URL(`/share/v2/${message.id}`, baseUrl);
+    console.log('Share: Generated URL:', shareUrl.href);
 
     toast({
       title: "App Published!",
@@ -17,7 +24,12 @@ export function Share({ message }: { message?: Message }) {
       variant: "default",
     });
 
-    await navigator.clipboard.writeText(shareUrl.href);
+    try {
+      await navigator.clipboard.writeText(shareUrl.href);
+      console.log('Share: URL copied to clipboard successfully');
+    } catch (error) {
+      console.error('Share: Failed to copy to clipboard:', error);
+    }
   }
 
   return (
@@ -26,6 +38,7 @@ export function Share({ message }: { message?: Message }) {
         type="submit"
         disabled={!message}
         className="inline-flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 text-sm text-foreground enabled:hover:bg-accent enabled:hover:text-accent-foreground disabled:opacity-50 transition-colors"
+        title={message ? `Share dashboard (ID: ${message.id})` : 'No message to share'}
       >
         <ShareIcon className="size-3" />
         Share

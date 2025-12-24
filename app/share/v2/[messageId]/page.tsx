@@ -40,9 +40,8 @@ export default async function SharePage({
   params: Promise<{ messageId: string }>;
 }) {
   const { messageId } = await params;
-
-  const prisma = getPrisma();
-  const message = await prisma.message.findUnique({ where: { id: messageId } });
+  const message = await getMessage(messageId);
+  
   if (!message) {
     notFound();
   }
@@ -53,8 +52,29 @@ export default async function SharePage({
   }
 
   return (
-    <div className="flex h-full w-full grow items-center justify-center">
-      <CodeRunner language={app.language} code={app.code} />
+    <div className="min-h-screen w-full bg-background">
+      {/* Header for shared page */}
+      <div className="border-b border-border bg-card/50 backdrop-blur-sm px-4 py-3">
+        <div className="mx-auto max-w-7xl flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-purple-600">
+              <span className="text-sm font-bold text-white">D</span>
+            </div>
+            <div>
+              <h1 className="text-sm font-semibold text-foreground">DashGen</h1>
+              <p className="text-xs text-muted-foreground">Shared Dashboard</p>
+            </div>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {message.chat.title}
+          </div>
+        </div>
+      </div>
+      
+      {/* Main content */}
+      <div className="h-[calc(100vh-64px)] w-full">
+        <CodeRunner language={app.language} code={app.code} />
+      </div>
     </div>
   );
 }

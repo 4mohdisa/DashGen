@@ -1,6 +1,8 @@
 import dedent from "dedent";
+import { dashboardExamples } from './dashboard-examples';
 
 export const examples = {
+  ...dashboardExamples,
   "landing page": {
     prompt: "Build a landing page for a healthcare company",
     response: `
