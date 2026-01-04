@@ -666,4 +666,5 @@ export default function LandingPage() {
   );
 }
 
-export const runtime = "edge";
+// Using Node.js runtime instead of Edge to avoid size limits (Edge limit is 1MB)
+export const runtime = "nodejs";
