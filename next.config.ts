@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["@codesandbox/sdk"],
+  // Empty turbopack config to enable Turbopack (default in Next.js 16+)
+  turbopack: {},
   webpack: (config, options) => {
     if (options.nextRuntime === "edge") {
       if (!config.resolve.conditionNames) {
